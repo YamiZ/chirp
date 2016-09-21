@@ -1,6 +1,22 @@
 var express = require('express');
 var router = express.Router();
 
+//middleware for api reqeust 
+router.use(function(req, res, next){
+
+	//allow all get request
+	if(req.method === "GET"){
+        return next();
+    }
+    //if user is authenticated allow all request 
+    if (req.isAuthenticated()){
+        return next();
+    }
+
+    // if the user is not authenticated then redirect him to the login page
+    return res.redirect('/#login');
+});
+
 router.route('/posts')
 	
 	//getting all existing posts
