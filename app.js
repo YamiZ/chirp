@@ -8,6 +8,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 
 require('./models/models');
+var index = require('./routes/index');
 var api = require('./routes/api');
 var authenticate = require('./routes/authenticate')(passport);
 var mongoose = require('mongoose');
@@ -41,6 +42,7 @@ app.use(passport.session());
 var initPassport = require('./passport-init');
 initPassport(passport);
 
+app.use('/',index);
 app.use('/auth', authenticate);
 app.use('/api', api);
 
