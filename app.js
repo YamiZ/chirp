@@ -27,7 +27,7 @@ app.set('view engine', 'ejs');
 app.use(logger('dev'));
 app.use(session({
   secret: 'secret',
-  resave: true,
+  resave: false,
   saveUninitialized: true
 }));
 app.use(bodyParser.json());
@@ -41,8 +41,8 @@ app.use(passport.session());
 var initPassport = require('./passport-init');
 initPassport(passport);
 
-app.use('/api', api);
 app.use('/auth', authenticate);
+app.use('/api', api);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

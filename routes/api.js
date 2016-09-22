@@ -4,27 +4,28 @@ var mongoose = require( 'mongoose' );
 var Post = mongoose.model('Post');
 
 //middleware for api reqeust 
-router.use(function(req, res, next){
+function isAuthenticated (req, res, next) {
 
-	//allow all get request
+	//allow all get request methods
 	if(req.method === "GET"){
-        return next();
-    }
-    //if user is authenticated allow all request 
-    if (req.isAuthenticated()){
-    	console.log("POSTING")
-        return next();
-    }
+		return next();
+	}
+	if (req.isAuthenticated()){
+		return next();
+	}
 
-    // if the user is not authenticated then redirect him to the login page
-    return res.redirect('/#login');
-});
+	// if the user is not authenticated then redirect him to the login page
+	return res.redirect('/#login');
+};
+
+//Register the authentication middleware
+router.use('/posts', isAuthenticated);
 
 router.route('/posts')
 	
 	//getting all existing posts
 	.get(function(req,res){
-
+		console.log("get");
 		Post.find(function(err, data){
 
 			if(err){
@@ -37,7 +38,7 @@ router.route('/posts')
 
 	//creating a new post
 	.post(function(req,res){
-
+		console.log("post")
 		var post = new Post();
         post.text = req.body.text;
         post.createdBy = req.body.createdBy;
@@ -69,7 +70,7 @@ router.route('/posts/:id')
                return res.send(err);
             }
 
-            post.created_by = req.body.created_by;
+            post.createdBy = req.body.createdBy;
             post.text = req.body.text;
 
             post.save(function(err, post){
