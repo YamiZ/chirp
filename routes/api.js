@@ -1,5 +1,7 @@
 var express = require('express');
 var router = express.Router();
+var mongoose = require( 'mongoose' );
+var Post = mongoose.model('Post');
 
 //middleware for api reqeust 
 router.use(function(req, res, next){
@@ -10,6 +12,7 @@ router.use(function(req, res, next){
     }
     //if user is authenticated allow all request 
     if (req.isAuthenticated()){
+    	console.log("POSTING")
         return next();
     }
 
@@ -22,38 +25,72 @@ router.route('/posts')
 	//getting all existing posts
 	.get(function(req,res){
 
-		//temp solution
-		res.send({message: 'TODO return all posts'});
+		Post.find(function(err, data){
+
+			if(err){
+				return res.send(500, err);
+			}
+
+			return res.send(200, data);
+		});
 	})
 
 	//creating a new post
 	.post(function(req,res){
 
-		//temp solution
-		res.send({message: 'TODO create new post'})
+		var post = new Post();
+        post.text = req.body.text;
+        post.createdBy = req.body.createdBy;
+
+        post.save(function(err, post) {
+            if (err){
+                return res.send(500, err);
+            }
+            return res.json(post);
+        });
 	});
 
 router.route('/posts/:id')
 	
 	// getting specific existing post
 	.get(function(req,res){
-
-		//temp solution
-		res.send({message: 'TODO return post with ID '+req.params.id});
+		Post.findById(req.params.id, function(err, post){
+            if(err){
+                return res.send(err);
+            }
+            return res.json(post);
+        });
 	})
 
 	// modifying specific existing post
 	.put(function(req,res){
+		Post.findById(req.params.id, function(err, post){
+            if(err){
+               return res.send(err);
+            }
 
-		//temp solution
-		res.send({message: 'TODO modify post with ID '+req.params.id});
+            post.created_by = req.body.created_by;
+            post.text = req.body.text;
+
+            post.save(function(err, post){
+                if(err){
+                    return res.send(err);
+                }
+                return res.json(post);
+            });
+        });
 	})
 
 	// deleting specific existing post
 	.delete(function(req,res){
-
-		//temp solution
-		res.send({message: 'TODO delete post with ID '+req.params.id});
+		Post.remove({
+            _id: req.params.id
+        }, function(err) {
+            if (err){
+               return res.send(err);
+            }
+            return res.json("deleted :(");
+        });
 	});
 
 module.exports = router;

@@ -27,6 +27,7 @@ module.exports = function(passport){
 
     //log out
     router.get('/signout', function(req, res) {
+        console.log("signout");
         req.logout();
         res.redirect('/');
     });

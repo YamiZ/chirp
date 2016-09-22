@@ -1,19 +1,31 @@
 var LocalStrategy   = require('passport-local').Strategy;
 var bCrypt = require('bcrypt-nodejs');
-//temporary data store
-var users = {};
+var mongoose = require('mongoose');
+var User = mongoose.model('User');
+var Post = mongoose.model('Post');
+
 module.exports = function(passport){
 
     // Passport needs to be able to serialize and deserialize users to support persistent login sessions
     passport.serializeUser(function(user, done) {
-        console.log('serializing user:',user.username);
-        return done(null, user.username);
+        console.log('serializing user:',user._id);
+        return done(null, user._id);
     });
 
-    passport.deserializeUser(function(username, done) {
+    passport.deserializeUser(function(id, done) {
 
-        return done(null, users[username]);
+        User.findById(id, function(err,user){
 
+            if(err){
+                return done(err,false);
+            }
+
+            if(!user){
+                return done('user not found',false);
+            }
+
+            return done(user,true);
+        });
     });
 
     passport.use('login', new LocalStrategy({
@@ -21,17 +33,22 @@ module.exports = function(passport){
         },
         function(req, username, password, done) { 
 
-            //check if user exist 
-            if(!users[username]){
-                return done('user not found', false);
-            }
+            User.findOne({ 'username' :  username }, function(err, user) {
 
-            //check if password matches
-            if(!isValidPassword(users[username],password)){
-                return done('invalid password',false);
-            }
+                if(err){
+                    return done(err, false);
+                }
 
-            return done(null, users[username]);
+                if(!user){
+                    return done('user not found', false);
+                }
+
+                if(!isValidPassword(user,password)){
+                    return done('invalid password',false);
+                }   
+
+                return done(null, user);
+            });
         }
     ));
 
@@ -40,22 +57,37 @@ module.exports = function(passport){
         },
         function(req, username, password, done) {
 
-            //check if username already exist 
-            if(users[username]){
-                return done('username already taken', false);
-            }
+            User.findOne({ 'username' :  username }, function(err, user) {
 
-            users[username] = {
-                username: username,
-                password: createHash(password)
-            };
+                if(err){
+                    return done(err, false);
+                }
 
-            return done(null, users[username]);
+                //check if user is already signed up
+                if(user){
+                    return done('username already taken', false);
+                }
 
+                //create new user
+                var newUser = new User();
+
+                newUser.username = username;
+                newUser.password = createHash(password);
+
+                newUser.save(function(err) {
+                    if (err){
+                        console.log('Error in Saving user: '+err);  
+                        throw err;  
+                    }
+                    console.log(newUser.username + ' Registration succesful');    
+                    return done(null, newUser);
+                });
+            });
         })
     );
 
     var isValidPassword = function(user, password){
+        console.log("check");
         return bCrypt.compareSync(password, user.password);
     };
     // Generates hash using bCrypt
